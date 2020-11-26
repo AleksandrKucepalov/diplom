@@ -1,7 +1,7 @@
 package main.model;
 
 import lombok.Data;
-import lombok.NonNull;
+import main.model.Enum.ModerationStatus;
 
 import javax.persistence.*;
 import java.util.ArrayList;

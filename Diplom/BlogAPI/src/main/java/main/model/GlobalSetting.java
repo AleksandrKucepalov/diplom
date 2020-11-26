@@ -2,6 +2,8 @@ package main.model;
 
 import lombok.Data;
 import lombok.NonNull;
+import main.model.Enum.GlobalSettingCode;
+import main.model.Enum.GlobalSettingValue;
 
 import javax.persistence.*;
 

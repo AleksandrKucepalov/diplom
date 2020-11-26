@@ -1,4 +1,4 @@
-package main.model;
+package main.model.Enum;
 
 public enum GlobalSettingCode {
     MULTIUSER_MODE("Многопользовательский режим"),

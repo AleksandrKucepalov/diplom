@@ -1,167 +1,149 @@
 package main.controller;
 
-import main.api.response.InitResponse;
-import main.model.*;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.springframework.beans.factory.annotation.Autowired;
+import main.api.request.PostRequest;
+import main.api.request.SettingsRequest;
+import main.api.response.*;
+import main.service.PostService;
+import main.service.SettingsService;
+import main.service.TagService;
 
-import org.springframework.http.HttpHeaders;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.xml.crypto.Data;
-import java.util.Comparator;
-import java.util.Date;
-
 @RestController
+@RequestMapping("/api")
 public class ApiGeneralController {
-
-    @Autowired
-    private PostRepository postRepository;
-
 
 
     private final InitResponse initResponse;
+    private final SettingsService settingsService;
+    private final PostService postService;
+    private final TagService tagService;
 
-    public ApiGeneralController(InitResponse initResponse) {
+    public ApiGeneralController(InitResponse initResponse, SettingsService settingsService, PostService postService, TagService tagService) {
         this.initResponse = initResponse;
+        this.settingsService = settingsService;
+        this.postService = postService;
+        this.tagService = tagService;
     }
 
-
-    @GetMapping("/api/init")
+    //1
+    @GetMapping("/init")
     public ResponseEntity<InitResponse> init() {
-/*
-        JSONObject jsonInit = new JSONObject();
-        jsonInit.put("title", "DevPub");
-        jsonInit.put("subtitle", "Рассказы разработчиков");
-        jsonInit.put("phone", "+7 952 863-28-62");
-        jsonInit.put("email", "a-l-e-x-007@yandex.ru");
-        jsonInit.put("copyright", "Куцепалов Александр");
-        jsonInit.put("copyrightFrom", "2020");
- */
+
         return new ResponseEntity<>(initResponse, HttpStatus.OK);
     }
 
-    @GetMapping("/api/post")
-    public ResponseEntity<JSONObject> post(@RequestParam(value = "offset",required = false, defaultValue = "0") int offset,
-                                           @RequestParam(value = "limit",required = false, defaultValue = "10") int limit,
-                                           @RequestParam(value = "mode",required = false, defaultValue = "recent") String mode) {
+    //27
+    @GetMapping("/settings")
+    public ResponseEntity<SettingsResponse> settings() {
 
-        //получаем все посту по условиям
-        Iterable<Post> iterable = postRepository.findPostWithActiveAndStatusACCEPTED(new Date());
-
-        JSONArray jsonArrayPosts = new JSONArray();
-        int countPost = 0;
-        for (Post post : iterable) {
-            JSONObject jsonPost = new JSONObject();
-            jsonPost.put("id", post.getId());
-            jsonPost.put("timestamp", (long) post.getTime().getTime() / 1000 - (int) (Math.random() * 1000));
-            //получаем автора поста
-            JSONObject jsonUser = new JSONObject();
-            jsonUser.put("id", post.getUserAuthor().getId());
-            jsonUser.put("name", post.getUserAuthor().getName());
-
-            jsonPost.put("user", jsonUser);
-            jsonPost.put("title", post.getTitle());
-            jsonPost.put("announce", post.getText() + post.getId());
-            jsonPost.put("likeCount", post.getCountLike());
-            jsonPost.put("dislikeCount", post.getCountDisLike());
-            jsonPost.put("commentCount", post.getPostCommentList().size());
-            jsonPost.put("viewCount", post.getViewCount());
-            //добавляем обьек в массив
-            jsonArrayPosts.add(jsonPost);
-            countPost++;
-        }
-
-        //сортируем в зависимости от параметра mode
-        //как вынести компоратор?
-        //почему то если я обьявляю Long, то не работает сортировка по коментариям и лайкам(почему, не пойму)
-        //если обьявляю Integer, то посты не сортируются(тут понятно почему)
-        //поэтому компоратор сделал для каждого параметра
-        String KEY_MODE;
-        switch (mode) {
-            case ("recent"):
-                KEY_MODE = "timestamp";
-                jsonArrayPosts.sort((Comparator<JSONObject>) (a, b) -> ComparatorJSONObject(a, b, KEY_MODE, "Long"));
-                break;
-            case ("popular"):
-                KEY_MODE = "commentCount";
-                jsonArrayPosts.sort((Comparator<JSONObject>) (a, b) -> ComparatorJSONObject(a, b, KEY_MODE, "Integer"));
-                break;
-            case ("best"):
-                KEY_MODE = "likeCount";
-                jsonArrayPosts.sort((Comparator<JSONObject>) (a, b) -> ComparatorJSONObject(a, b, KEY_MODE, "Integer"));
-                break;
-            default:
-                KEY_MODE = "timestamp";
-                jsonArrayPosts.sort((Comparator<JSONObject>) (a, b) -> ComparatorJSONObject(a, b, KEY_MODE, "LongDesc"));
-                break;
-        }
-
-        //массив для показа
-        JSONArray jsonArrayPostsPokaz = new JSONArray();
-        if (jsonArrayPosts != null) {
-            int lenArray = jsonArrayPosts.size();
-            int len = 0;
-            if (offset + limit > lenArray) {
-                len = lenArray;
-            } else {
-                len = offset + limit;
-            }
-            for (int i = offset; i < len; i++) {
-                jsonArrayPostsPokaz.add(jsonArrayPosts.get(i));
-            }
-        }
-
-        //основной json для ответа
-        JSONObject jsonPostsAnswer = new JSONObject();
-        jsonPostsAnswer.put("count", countPost);
-        jsonPostsAnswer.put("posts", jsonArrayPostsPokaz);
-
-        return new ResponseEntity<>(jsonPostsAnswer, HttpStatus.OK);
+        return new ResponseEntity<>(settingsService.getGlobalSettings(), HttpStatus.OK);
     }
 
-    @GetMapping("/api/tag")
-    public ResponseEntity<JSONObject> tag() {
+    //28
+    @PutMapping("/settings")
+    public void settingsPut(@RequestBody SettingsRequest settingsRequest) {
 
-        JSONObject jsonTag = new JSONObject();
-        JSONArray jsonArrayTags = new JSONArray();
-
-        JSONObject jsontag1 = new JSONObject();
-        jsontag1.put("name", "PHP");
-        jsontag1.put("weight", 1);
-        jsonArrayTags.add(jsontag1);
-
-        JSONObject jsontag2 = new JSONObject();
-        jsontag2.put("name", "Python");
-        jsontag2.put("weight", 0.33);
-        jsonArrayTags.add(jsontag2);
-
-        jsonTag.put("tags", jsonArrayTags);
-
-        return new ResponseEntity<>(jsonTag, HttpStatus.OK);
     }
 
-    public int ComparatorJSONObject(JSONObject a, JSONObject b, String KEY_MODE, String type) {
-        String KEY_NAME = KEY_MODE;
-        if (type.equals("Integer")) {
-            Integer valA = (Integer) a.get(KEY_NAME);
-            Integer valB = (Integer) b.get(KEY_NAME);
-            return (valB.compareTo(valA));
-        } else if (type.equals("IntegerDesc")) {
-            Integer valA = (Integer) a.get(KEY_NAME);
-            Integer valB = (Integer) b.get(KEY_NAME);
-            return -(valB.compareTo(valA));
-        } else if (type.equals("LongDesc")) {
-            Long valA = (Long) a.get(KEY_NAME);
-            Long valB = (Long) b.get(KEY_NAME);
-            return -(valB.compareTo(valA));
-        } else {
-            Long valA = (Long) a.get(KEY_NAME);
-            Long valB = (Long) b.get(KEY_NAME);
-            return (valB.compareTo(valA));
-        }
+    //2
+    @GetMapping("/post")
+    public ResponseEntity<PostResponse> post(@RequestParam(value = "offset", required = false, defaultValue = "0") int offset,
+                                             @RequestParam(value = "limit", required = false, defaultValue = "10") int limit,
+                                             @RequestParam(value = "mode", required = false, defaultValue = "recent") String mode) {
+
+        return new ResponseEntity<>(postService.getPost(offset, limit, mode), HttpStatus.OK);
     }
+
+    //3
+    @GetMapping("/post/search")
+    public ResponseEntity<PostResponse> postSearch(@RequestParam(value = "offset", required = false, defaultValue = "0") int offset,
+                                                   @RequestParam(value = "limit", required = false, defaultValue = "10") int limit,
+                                                   @RequestParam(value = "query", required = false, defaultValue = "") String query) {
+
+        return new ResponseEntity<>(new PostResponse(), HttpStatus.OK);
+    }
+
+    //4
+    @GetMapping("/post/byDate")
+    public ResponseEntity<PostResponse> postByDate(@RequestParam(value = "offset", required = false, defaultValue = "0") int offset,
+                                                   @RequestParam(value = "limit", required = false, defaultValue = "10") int limit,
+                                                   @RequestParam(value = "date", required = false, defaultValue = "") String date) {
+
+        return new ResponseEntity<>(new PostResponse(), HttpStatus.OK);
+    }
+
+    //5
+    @GetMapping("/post/byTag")
+    public ResponseEntity<PostResponse> postByTag(@RequestParam(value = "offset", required = false, defaultValue = "0") int offset,
+                                                  @RequestParam(value = "limit", required = false, defaultValue = "10") int limit,
+                                                  @RequestParam(value = "tag", required = false, defaultValue = "") String tag) {
+
+        return new ResponseEntity<>(new PostResponse(), HttpStatus.OK);
+    }
+
+    //6
+    @GetMapping("/post/moderation")
+    public ResponseEntity<PostResponse> postModeration(@RequestParam(value = "offset", required = false, defaultValue = "0") int offset,
+                                                       @RequestParam(value = "limit", required = false, defaultValue = "10") int limit,
+                                                       @RequestParam(value = "status", required = false, defaultValue = "new") String status) {
+
+        return new ResponseEntity<>(new PostResponse(), HttpStatus.OK);
+    }
+
+    //7
+    @GetMapping("/post/my")
+    public ResponseEntity<PostResponse> postMy(@RequestParam(value = "offset", required = false, defaultValue = "0") int offset,
+                                               @RequestParam(value = "limit", required = false, defaultValue = "10") int limit,
+                                               @RequestParam(value = "status", required = false, defaultValue = "inactive") String status) {
+
+        return new ResponseEntity<>(new PostResponse(), HttpStatus.OK);
+    }
+
+    //8
+    @GetMapping("/post/{id}")
+    public ResponseEntity<PostIdResponse> postId(@PathVariable int id) {
+
+        return new ResponseEntity<>(new PostIdResponse(), HttpStatus.OK);
+    }
+
+    //11
+    @PutMapping("/post/{id}")
+    public ResponseEntity postUpdate(@RequestBody PostRequest postRequest) {
+
+        return new ResponseEntity<>(new ResultResponse(), HttpStatus.OK);
+    }
+
+    //13
+    @GetMapping("/tag")
+    public ResponseEntity<TagsResponse> tag() {
+
+        return new ResponseEntity<>(tagService.getTags(), HttpStatus.OK);
+    }
+
+    //14.1
+    @GetMapping("/calendar")
+    public ResponseEntity<CalendarResponse> calendar(@RequestParam(value = "year", required = false, defaultValue = "0") int year) {
+
+        return new ResponseEntity<>(new CalendarResponse(), HttpStatus.OK);
+    }
+
+    //22
+    @GetMapping("/statistics/my")
+    public ResponseEntity<StatisticsResponse> statisticsMy() {
+
+        return new ResponseEntity<>(new StatisticsResponse(), HttpStatus.OK);
+    }
+
+    //23
+    @GetMapping("/statistics/all")
+    public ResponseEntity<StatisticsResponse> statisticsAll() {
+
+        return new ResponseEntity<>(new StatisticsResponse(), HttpStatus.OK);
+    }
+
+
 }
