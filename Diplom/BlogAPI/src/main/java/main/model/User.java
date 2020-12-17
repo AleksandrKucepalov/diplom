@@ -51,4 +51,8 @@ public class User {
     public User() {
 
     }
+
+    public Role getRole(){
+       return isModerator == 1 ? Role.MODERATOR : Role.USER;
+    }
 }

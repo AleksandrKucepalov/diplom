@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NonNull;
 
 import javax.persistence.*;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -16,8 +17,9 @@ public class Tag {
     @Column(nullable = false)
     private String name; //текст тэга
 
-    @ManyToMany(mappedBy = "tagSet")
-    private Set<Post> postSet;
+
+    @ManyToMany(mappedBy = "tagList")
+    private List<Post> postList;
 
     public Tag() {
 

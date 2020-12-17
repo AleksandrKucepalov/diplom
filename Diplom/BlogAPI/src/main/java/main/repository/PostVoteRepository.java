@@ -9,6 +9,12 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface PostVoteRepository extends CrudRepository<PostVote,Integer> {
+public interface PostVoteRepository extends CrudRepository<PostVote, Integer> {
+
+    @Query(nativeQuery = true, value =
+            "select e.* from post_votes e " +
+                    "where e.value = ?1 and   " +
+                    " post_id = ?2 and user_id = ?3")
+    PostVote findByValueAndPostID(int value, long postId, long userId);
 
 }

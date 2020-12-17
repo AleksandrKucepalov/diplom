@@ -6,7 +6,7 @@ import javax.persistence.Column;
 import java.util.Date;
 
 @Data
-public class UserForResultLoginResponse {
+public class _UserForResultLoginResponse {
 
     private long id;
     private String  name;

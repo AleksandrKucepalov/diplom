@@ -40,4 +40,7 @@ public class PostComment {
 
     public PostComment() {
     }
+    public long getTimeSec(){
+        return getTime().getTime() / 1000;
+    }
 }

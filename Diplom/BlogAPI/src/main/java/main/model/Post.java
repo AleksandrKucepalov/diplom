@@ -11,34 +11,34 @@ import java.util.Set;
 
 @Entity
 @Data
-@Table(name="posts")
+@Table(name = "posts")
 public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id ;//поста
+    private long id;//поста
     @Column(name = "is_active", nullable = false, columnDefinition = "tinyint")
-    private int isActive ;// скрыта или активна публикация: 0 или 1
+    private int isActive;// скрыта или активна публикация: 0 или 1
     @Enumerated(EnumType.STRING)
-    @Column(name = "moderation_status", nullable = false,columnDefinition = "enum('NEW', 'ACCEPTED','DECLINED')")
+    @Column(name = "moderation_status", nullable = false, columnDefinition = "enum('NEW', 'ACCEPTED','DECLINED')")
     private ModerationStatus moderationStatus = ModerationStatus.NEW;//статус модерации, по умолчанию значение "NEW".
     //@Column(name = "moderator_id")
     //private Integer moderatorId;//ID пользователя-модератора, принявшего решение, или NULL
     @ManyToOne
-    @JoinColumn(name="moderator_id")
+    @JoinColumn(name = "moderator_id")
     private User userModerator;
 
     //@Column(name = "user_id", nullable = false)
     //private int userId;// автор поста
     @ManyToOne
-    @JoinColumn(name="user_id", nullable=false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User userAuthor;
 
     @Column(nullable = false)
-    private Date time ;// дата и время публикации поста
+    private Date time;// дата и время публикации поста
     @Column(nullable = false)
-    private String  title;// заголовок поста
+    private String title;// заголовок поста
     @Column(nullable = false, columnDefinition = "text")
-    private String  text;//текст поста
+    private String text;//текст поста
     @Column(name = "view_count", nullable = false)
     private int viewCount = 0;//количество просмотров поста
 
@@ -52,7 +52,7 @@ public class Post {
             joinColumns = {@JoinColumn(name = "post_id")},
             inverseJoinColumns = {@JoinColumn(name = "tag_id")}
     )
-    private Set<Tag> tagSet;
+    private List<Tag> tagList;
 
     //список лайков/дизлайков
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -62,27 +62,32 @@ public class Post {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostComment> postCommentList;
 
+
     public Post() {
     }
 
-    public int getCountLike(){
+    public int getCountLike() {
         List<PostVote> postVoteLike = new ArrayList<>();
-        for(PostVote postVote : postVoteList){
-            if(postVote.getValue()==1){
+        for (PostVote postVote : postVoteList) {
+            if (postVote.getValue() == 1) {
                 postVoteLike.add(postVote);
             }
         }
         return postVoteLike.size();
     }
 
-    public int getCountDisLike(){
+    public int getCountDisLike() {
         List<PostVote> postVoteDisLike = new ArrayList<>();
-        for(PostVote postVote : postVoteList){
-            if(postVote.getValue()==1){
+        for (PostVote postVote : postVoteList) {
+            if (postVote.getValue() == -1) {
                 postVoteDisLike.add(postVote);
             }
         }
         return postVoteDisLike.size();
+    }
+
+    public long getTimeSec() {
+        return getTime().getTime() / 1000;
     }
 
 }

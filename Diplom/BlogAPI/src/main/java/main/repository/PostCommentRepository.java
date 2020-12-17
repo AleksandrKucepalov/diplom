@@ -12,4 +12,6 @@ import java.util.List;
 @Repository
 public interface PostCommentRepository extends CrudRepository<PostComment,Integer> {
 
+    PostComment findById(long id);
+
 }

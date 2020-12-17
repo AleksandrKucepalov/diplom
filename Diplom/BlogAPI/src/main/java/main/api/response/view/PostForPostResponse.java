@@ -7,7 +7,7 @@ public class PostForPostResponse {
 
     private long id;
     private long timestamp;
-    private UserForPost user;
+    private UserForResponse user;
     private String title;
     private String announce;
     private int likeCount;

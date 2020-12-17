@@ -2,16 +2,17 @@ package main.api.response;
 
 import lombok.Data;
 import main.api.response.view.CommentForPostId;
-import main.api.response.view.UserForPost;
+import main.api.response.view.UserForResponse;
 
 import java.util.ArrayList;
 
 @Data
 public class PostIdResponse {
+
     private long id;
     private long timestamp;
     private boolean active;
-    private UserForPost user;
+    private UserForResponse user;
     private String title;
     private String text;
     private int likeCount;

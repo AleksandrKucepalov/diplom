@@ -1,8 +1,10 @@
 package main.api.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
 
-public class LikeAndDislikeRequest {
+@Data
+public class VoteRequest {
 
     @JsonProperty("post_id")
     private long postId;

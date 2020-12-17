@@ -4,6 +4,7 @@ import lombok.Data;
 
 @Data
 public class StatisticsResponse {
+
     private int postsCount;
     private int likesCount;
     private int dislikeCount;

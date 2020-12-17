@@ -7,6 +7,7 @@ import java.util.ArrayList;
 
 @Data
 public class PostResponse {
+
     private int count;
     private ArrayList<PostForPostResponse> posts = new ArrayList<>();
 }
