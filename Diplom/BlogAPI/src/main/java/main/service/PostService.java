@@ -2,10 +2,7 @@ package main.service;
 
 import main.api.request.ModerationRequest;
 import main.api.request.PostRequest;
-import main.api.response.CalendarResponse;
-import main.api.response.PostIdResponse;
-import main.api.response.PostResponse;
-import main.api.response.ResultResponse;
+import main.api.response.*;
 import main.api.response.view.CommentForPostId;
 import main.api.response.view.PostForPostResponse;
 import main.api.response.view.UserForResponse;
@@ -15,7 +12,7 @@ import main.model.Post;
 import main.model.PostComment;
 import main.model.Tag;
 import main.repository.PostRepository;
-import main.repository.TagRepository;
+import main.repository.PostVoteRepository;
 import main.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -23,10 +20,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -36,7 +38,7 @@ public class PostService {
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private TagRepository tagRepository;
+    private PostVoteRepository postVoteRepository;
 
     public PostResponse getPost(int offset, int limit, String mode) {
 
@@ -274,7 +276,7 @@ public class PostService {
         } else {
             ResultResponse resultResponse = getResultResponse(postRequest);
             if (resultResponse.isResult()) {
-                savaPost(post, email, postRequest);
+                savePost(post, email, postRequest);
             }
             return resultResponse;
         }
@@ -287,7 +289,7 @@ public class PostService {
         if (resultResponse.isResult()) {
             //создаем пост
             Post post = new Post();
-            savaPost(post, email, postRequest);
+            savePost(post, email, postRequest);
         }
         return resultResponse;
     }
@@ -336,21 +338,93 @@ public class PostService {
         return calendarResponse;
     }
 
+    public StatisticsResponse getStatisticsMy(String email) {
 
-//----------------------------------------------------------------------------------------------
+        try {
+            main.model.User userTek = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("user " + email + " not found"));
+            long idUser = userTek.getId();
+            StatisticsResponse statisticsResponse = new StatisticsResponse();
+            statisticsResponse.setPostsCount(postRepository.countByPost(idUser));
+            statisticsResponse.setViewsCount(postRepository.countByView(idUser));
+            statisticsResponse.setFirstPublication(postRepository.firstByPublication(idUser).getTime() / 1000);
+            statisticsResponse.setLikesCount(postVoteRepository.countByLike(idUser));
+            statisticsResponse.setDislikesCount(postVoteRepository.countByDisLike(idUser));
+
+            return statisticsResponse;
+        } catch (Exception e) {
+            return new StatisticsResponse();
+        }
+    }
+
+    public String addImage(MultipartFile file) throws Exception {
+
+        InputStream in = file.getInputStream();
+        String path1 = getHash(2);
+        String path2 = getHash(2);
+        String path3 = getHash(2);
+        String path = "upload/" + path1 + "/" + path2 + "/" + path3;
+        Path dir = Files.createDirectories(Paths.get(path));
+        FileOutputStream f = new FileOutputStream(String.valueOf(dir.resolve(file.getOriginalFilename())));
+        int ch = 0;
+        while ((ch = in.read()) != -1) {
+            f.write(ch);
+        }
+        f.flush();
+        f.close();
+        System.out.println(path);
+        return path;
+
+    }
+
+    public StatisticsResponse getStatisticsAll(String email) {
+
+        try {
+            main.model.User userTek = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("user " + email + " not found"));
+            StatisticsResponse statisticsResponse = new StatisticsResponse();
+            statisticsResponse.setPostsCount(postRepository.countByPostAll());
+            statisticsResponse.setViewsCount(postRepository.countByViewAll());
+            statisticsResponse.setFirstPublication(postRepository.firstByPublicationAll().getTime() / 1000);
+            statisticsResponse.setLikesCount(postVoteRepository.countByLikeAll());
+            statisticsResponse.setDislikesCount(postVoteRepository.countByDisLikeAll());
+
+            //проверяем настройки блога
+            if (1 == 1) {
+                return statisticsResponse;
+            } else {
+                if (userTek.getIsModerator() == 1) {
+                    return statisticsResponse;
+                } else {
+                    return new StatisticsResponse();
+                }
+            }
+
+        } catch (Exception e) {
+            return new StatisticsResponse();
+        }
+    }
+
+    //----------------------------------------------------------------------------------------------
     //вспомогательные методы
+    public String getHash(int length) {
+        String symbols = "abcdefghijklmnopqrstuvwxyz1234567890";
+        String random = new Random().ints(length, 0, symbols.length())
+                .mapToObj(symbols::charAt)
+                .map(Object::toString)
+                .collect(Collectors.joining());
+        return random;
+    }
 
     private ResultResponse getResultResponse(PostRequest postRequest) {
-        ResultResponse resultResponse = new ResultResponse();
 
+        ResultResponse resultResponse = new ResultResponse();
         boolean flagError = false;
         Map<String, Object> errors = new HashMap<>();
         if (postRequest.getTitle().length() < 3) {
-            errors.put("title", "Заголовок не установлен");
+            errors.put("title", "Заголовок не установлен. Минимальная длина 3 символа.");
             flagError = true;
         }
         if (postRequest.getText().length() < 30) {
-            errors.put("text", "Текст побликации слишком короткий");
+            errors.put("text", "Текст побликации слишком короткий. Минимальная длина 30 символов.");
             flagError = true;
         }
         if (flagError) {
@@ -362,6 +436,7 @@ public class PostService {
     }
 
     private PostResponse getPostResponse(Iterable<Post> iterable, int countPost) {
+
         ArrayList<PostForPostResponse> jsonArrayPosts = new ArrayList<>();
         //
         for (Post post : iterable) {
@@ -404,12 +479,13 @@ public class PostService {
         return textOut;
     }
 
-    private void savaPost(Post post, String email, PostRequest postRequest) {
+    private void savePost(Post post, String email, PostRequest postRequest) {
 
         Date dateTek = new Date();
         Date datePost = new Date(postRequest.getTimestamp() * 1000);
         if (dateTek.compareTo(datePost) > 0) {
             datePost = dateTek;
+
         }
         post.setTime(datePost);
         post.setIsActive(postRequest.getActive());
@@ -447,5 +523,4 @@ public class PostService {
         calendar.setTime(new java.util.Date());
         return calendar.get(java.util.Calendar.YEAR);
     }
-
 }

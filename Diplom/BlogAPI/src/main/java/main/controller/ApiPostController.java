@@ -1,16 +1,21 @@
 package main.controller;
 
+
+
 import main.api.request.*;
 import main.api.response.ResultResponse;
-import main.repository.CommentService;
+import main.service.AuthService;
+import main.service.CommentService;
 import main.service.PostService;
 import main.service.VoteService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -19,12 +24,14 @@ public class ApiPostController {
     private final VoteService voteService;
     private final PostService postService;
     private final CommentService commentService;
+    private final AuthService authService;
 
-    public ApiPostController(VoteService voteService, PostService postService, CommentService commentService) {
+    public ApiPostController(VoteService voteService, PostService postService, CommentService commentService, AuthService authService) {
 
         this.voteService = voteService;
         this.postService = postService;
         this.commentService = commentService;
+        this.authService = authService;
     }
 
     //9
@@ -41,9 +48,20 @@ public class ApiPostController {
 
     //10
     @PostMapping("/image")
-    public ResponseEntity image(@RequestParam String image) {
+    public ResponseEntity image(@RequestParam("image") MultipartFile file) {
+        try {
+           String path = postService.addImage(file);
+            return new ResponseEntity<>(path, HttpStatus.OK);
+        } catch (Exception e){
+            e.printStackTrace();
+            ResultResponse response = new ResultResponse();
+            Map<String,Object> errors = new HashMap<>();
+            errors.put("image","Размер файла больше 5 МБ");
+            response.setErrors(errors);
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
 
-        return new ResponseEntity<>(new ResultResponse(), HttpStatus.BAD_REQUEST);
+
     }
 
     //12
@@ -73,9 +91,13 @@ public class ApiPostController {
 
     //20
     @PostMapping("/profile/my")
-    public ResponseEntity profileMy() {
-
-        return new ResponseEntity<>(new ResultResponse(), HttpStatus.OK);
+    public ResponseEntity profileMy(Principal principal, @RequestBody MyRequest myRequest) {
+        if (principal == null) {
+            return new ResponseEntity<>(new ResultResponse(), HttpStatus.OK);
+        } else {
+            String email = principal.getName();
+            return new ResponseEntity<>(authService.getMyResponse( myRequest,email), HttpStatus.OK);
+        }
     }
 
     //24

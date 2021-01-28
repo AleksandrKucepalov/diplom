@@ -1,9 +1,13 @@
-package main.repository;
+package main.service;
+
 
 import main.api.request.CommentRequest;
 import main.api.response.ResultResponse;
 import main.model.Post;
 import main.model.PostComment;
+import main.repository.PostCommentRepository;
+import main.repository.PostRepository;
+import main.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,10 +29,11 @@ public class CommentService {
     private PostCommentRepository postCommentRepository;
 
     public ResponseEntity addComment(CommentRequest commentRequest, String email) {
+
         ResultResponse resultResponse = new ResultResponse();
-        if (commentRequest.getText().length() < 30) {
+        if (commentRequest.getText().length() < 3) {
             Map<String, Object> errors = new HashMap<>();
-            errors.put("text", "Текст комментария не задан или слишком короткий");
+            errors.put("text", "Текст комментария не задан или слишком короткий.");
             resultResponse.setErrors(errors);
             return new ResponseEntity<>(resultResponse, HttpStatus.OK);
         } else {

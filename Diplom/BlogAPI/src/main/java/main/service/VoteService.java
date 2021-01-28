@@ -1,10 +1,9 @@
 package main.service;
 
 
+
 import main.api.response.ResultResponse;
-import main.model.Post;
 import main.model.PostVote;
-import main.model.User;
 import main.repository.PostRepository;
 import main.repository.PostVoteRepository;
 import main.repository.UserRepository;
@@ -55,5 +54,4 @@ public class VoteService {
             return new ResultResponse();
         }
     }
-
 }

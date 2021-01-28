@@ -1,6 +1,10 @@
 package main.controller;
 
-import main.api.request.*;
+
+import main.api.request.LoginRequest;
+import main.api.request.PasswordRequest;
+import main.api.request.RegisterRequest;
+import main.api.request.RestoreRequest;
 import main.api.response.ResultResponse;
 import main.repository.UserRepository;
 import main.service.AuthService;
@@ -43,7 +47,7 @@ public class ApiAuthController {
             SecurityContextHolder.getContext().setAuthentication(auth);
             User user = (User) auth.getPrincipal();
             String email = user.getUsername();
-            return new ResponseEntity<>(authService.getAuth(email), HttpStatus.OK);
+            return new ResponseEntity<>(authService.getAuthResponse(email), HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(new ResultResponse(), HttpStatus.OK);
         }
@@ -59,7 +63,7 @@ public class ApiAuthController {
             return new ResponseEntity<>(new ResultResponse(), HttpStatus.OK);
         } else {
             String email = principal.getName();
-            return new ResponseEntity<>(authService.getAuth(email), HttpStatus.OK);
+            return new ResponseEntity<>(authService.getAuthResponse(email), HttpStatus.OK);
         }
     }
 
@@ -67,34 +71,36 @@ public class ApiAuthController {
     @PostMapping("/restore")
     public ResponseEntity restore(@RequestBody RestoreRequest restoreRequest) {
 
-        return new ResponseEntity<>(new ResultResponse(), HttpStatus.OK);
+        return new ResponseEntity<>(authService.getRestoreResponse(restoreRequest.getEmail()), HttpStatus.OK);
     }
 
     //18
     @PostMapping("/password")
     public ResponseEntity password(@RequestBody PasswordRequest passwordRequest) {
 
-        return new ResponseEntity<>(new ResultResponse(), HttpStatus.OK);
+        return new ResponseEntity<>(authService.getPasswordResponse(passwordRequest), HttpStatus.OK);
     }
 
     //19
     @PostMapping("/register")
     public ResponseEntity register(@RequestBody RegisterRequest registerRequest) {
 
-        return new ResponseEntity<>(new ResultResponse(), HttpStatus.OK);
+        return new ResponseEntity<>(authService.getRegisterResponse(registerRequest), HttpStatus.OK);
     }
 
     //21
     @GetMapping("/captcha")
     public ResponseEntity captcha() {
 
-        return new ResponseEntity<>(new ResultResponse(), HttpStatus.OK);
+
+        return new ResponseEntity<>(authService.captcha(), HttpStatus.OK);
     }
 
     //26
     @GetMapping("/logout")
     public ResponseEntity logout() {
-
-        return new ResponseEntity<>(new ResultResponse(), HttpStatus.OK);
+        ResultResponse response = new ResultResponse();
+        response.setResult(true);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

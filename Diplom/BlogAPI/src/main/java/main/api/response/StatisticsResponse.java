@@ -7,7 +7,7 @@ public class StatisticsResponse {
 
     private int postsCount;
     private int likesCount;
-    private int dislikeCount;
+    private int dislikesCount;
     private int viewsCount;
     private long firstPublication;
 }

@@ -1,5 +1,6 @@
 package main.controller;
 
+
 import main.api.request.PostRequest;
 import main.api.request.SettingsRequest;
 import main.api.response.*;
@@ -10,7 +11,6 @@ import main.service.TagService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -31,6 +31,7 @@ public class ApiGeneralController {
         this.postService = postService;
         this.tagService = tagService;
     }
+
 
     //1
     @GetMapping("/init")
@@ -161,16 +162,38 @@ public class ApiGeneralController {
 
     //22
     @GetMapping("/statistics/my")
-    public ResponseEntity<StatisticsResponse> statisticsMy() {
+    public ResponseEntity<StatisticsResponse> statisticsMy(Principal principal) {
 
-        return new ResponseEntity<>(new StatisticsResponse(), HttpStatus.OK);
+        if (principal == null) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        } else {
+            String email = principal.getName();
+            StatisticsResponse statisticsResponse = postService.getStatisticsMy(email);
+            if (statisticsResponse == null) {
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            } else {
+                return new ResponseEntity<>(statisticsResponse, HttpStatus.OK);
+
+            }
+        }
     }
+
 
     //23
     @GetMapping("/statistics/all")
-    public ResponseEntity<StatisticsResponse> statisticsAll() {
+    public ResponseEntity<StatisticsResponse> statisticsAll(Principal principal) {
+        if (principal == null) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        } else {
+            String email = principal.getName();
+            StatisticsResponse statisticsResponse = postService.getStatisticsAll(email);
+            if (statisticsResponse == null) {
+                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            } else {
+                return new ResponseEntity<>(statisticsResponse, HttpStatus.OK);
+            }
+        }
 
-        return new ResponseEntity<>(new StatisticsResponse(), HttpStatus.OK);
     }
 
 

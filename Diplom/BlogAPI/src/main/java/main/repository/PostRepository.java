@@ -21,7 +21,8 @@ public interface PostRepository extends CrudRepository<Post, Integer> {
     int getCount();
 
     @Query(value = "select e.* from Posts e  " +
-            "left join (select Post_id  postId, count(*) countLike from Post_Votes p where p.value = 1  group by Post_id) p " +
+            "left join (select Post_id  postId, count(*) countLike from Post_Votes p " +
+            "where p.value = 1  group by Post_id) p " +
             "on e.id = p.postId " +
             "where e.is_Active = 1 and moderation_Status = 'ACCEPTED' and time <= now() " +
             "order by countLike desc", nativeQuery = true)
@@ -42,10 +43,10 @@ public interface PostRepository extends CrudRepository<Post, Integer> {
     int getCountQuery(String query);
 
     //4
-    @Query("select e from Post e where cast(time as date) = cast(?1 as date)")
+    @Query("select e from Post e where  e.isActive = 1 and moderationStatus = 'ACCEPTED' and cast(time as date) = cast(?1 as date)")
     List<Post> findByPostDate(Pageable page, String date);
 
-    @Query("select count(*) from Post e where cast(time as date)= cast(?1 as date)")
+    @Query("select count(*) from Post e where  e.isActive = 1 and moderationStatus = 'ACCEPTED' and cast(time as date)= cast(?1 as date)")
     int getCountDate(String date);
 
     //5
@@ -101,17 +102,46 @@ public interface PostRepository extends CrudRepository<Post, Integer> {
                     "and user_id = ?3")
     int getCountMy(int isActive, String status, long userId);
 
-    //@Query("select e from Post e where e.id = :id")
+    @Query("select e from Post e where  e.isActive = 1 and e.moderationStatus = 'ACCEPTED' and  e.id = :id")
     Post findById(long id);
 
     @Query(nativeQuery = true, value =
-            "select distinct YEAR(time)   from posts e order by YEAR(time)")
+            "select distinct YEAR(time)   from posts e where  e.isActive = 1 and e.moderationStatus = 'ACCEPTED' order by YEAR(time)")
     ArrayList<Integer> findByYear();
 
     @Query(nativeQuery = true, value =
-            "select  cast(time as date) date, count(*) count  from posts e " +
+            "select  cast(time as date) date, count(*) count  from posts e where  e.isActive = 1 and e.moderationStatus = 'ACCEPTED' " +
                     "group by cast(time as date)")
     List<DateCount> findByCountInDate();
 
 
+    @Query(value = "select count(*)  from posts e " +
+            "where e.is_active = 1 and moderation_Status = 'ACCEPTED' " +
+            "and time <= now() and  user_id = :idUser", nativeQuery = true)
+    int countByPost(long idUser);
+
+    @Query(value = "select count(*)  from posts e " +
+            "where e.is_active = 1 and moderation_Status = 'ACCEPTED' " +
+            "and time <= now()", nativeQuery = true)
+    int countByPostAll();
+
+    @Query(value = "select sum(view_count)  from posts e " +
+            "where e.is_active = 1 and moderation_Status = 'ACCEPTED' " +
+            "and time <= now() and  user_id = :idUser", nativeQuery = true)
+    int countByView(long idUser);
+
+    @Query(value = "select sum(view_count)  from posts e " +
+            "where e.is_active = 1 and moderation_Status = 'ACCEPTED' " +
+            "and time <= now()", nativeQuery = true)
+    int countByViewAll();
+
+    @Query(value = "select min(time)  from posts e " +
+            "where e.is_active = 1 and moderation_Status = 'ACCEPTED' " +
+            "and time <= now() and  user_id = :idUser", nativeQuery = true)
+    Date firstByPublication(long idUser);
+
+    @Query(value = "select min(time)  from posts e " +
+            "where e.is_active = 1 and moderation_Status = 'ACCEPTED' " +
+            "and time <= now()", nativeQuery = true)
+    Date firstByPublicationAll();
 }

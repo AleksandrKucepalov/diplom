@@ -1,9 +1,9 @@
 package main.service;
 
+
 import main.api.response.TagsResponse;
 import main.api.response.view.TagForTagsResponse;
 import main.model.Tag;
-import main.repository.PostRepository;
 import main.repository.TagRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -29,7 +29,6 @@ public class TagService {
                 int count = tagRepository.countTag(nameTag);
                 countTagsMap.put(nameTag, count);
             }
-
             //int sumCount = 0;
             int maxCount = -1;
             Set<String> setTags = countTagsMap.keySet();
@@ -40,9 +39,7 @@ public class TagService {
                 }
             }
 
-
             ArrayList<TagForTagsResponse> jsonArrayTags = new ArrayList<>();
-
             for (String tag : setTags) {
                 TagForTagsResponse jsontag = new TagForTagsResponse();
                 jsontag.setName(tag);
@@ -50,10 +47,7 @@ public class TagService {
                 jsonArrayTags.add(jsontag);
             }
             jsonTag.setTags(jsonArrayTags);
-
-
         }
         return jsonTag;
-
     }
 }

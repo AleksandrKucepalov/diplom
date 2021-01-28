@@ -1,7 +1,6 @@
 package main.model;
 
 import lombok.Data;
-import lombok.NonNull;
 import main.model.Enum.GlobalSettingCode;
 import main.model.Enum.GlobalSettingValue;
 
@@ -14,14 +13,10 @@ public class GlobalSetting {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;//id настройки
-    @NonNull
     @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private GlobalSettingCode code;//системное имя настройки
-    @NonNull
+    private String code;//системное имя настройки
     @Column(nullable = false)
     private String name ;//название настройки
-    @NonNull
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private GlobalSettingValue value ;//значение настройки

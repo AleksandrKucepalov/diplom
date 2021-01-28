@@ -1,6 +1,8 @@
 package main.repository;
 
+import main.model.Post;
 import main.model.User;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -15,5 +17,12 @@ public interface UserRepository extends CrudRepository<User, Integer> {
     User findById(long Id);
 
     Optional<User> findByEmail(String email);
+    Optional<User> findByCode(String code);
+
+
+
+
+
+
 
 }
