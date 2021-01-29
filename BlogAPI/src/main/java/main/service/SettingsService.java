@@ -19,9 +19,10 @@ public class SettingsService {
     public SettingsResponse getGlobalSettings() {
 
         SettingsResponse settingsResponse = new SettingsResponse();
-        settingsResponse.setMultiuserMode((globalSettingRepository.findAllByCode("MULTIUSER_MODE").getValue().equals("YES")) ? true : false);
-        settingsResponse.setPostPremoderation((globalSettingRepository.findAllByCode("POST_PREMODERATION").getValue().equals("YES")) ? true : false);
-        settingsResponse.setStatisticsIsPublic((globalSettingRepository.findAllByCode("STATISTICS_IS_PUBLIC").getValue().equals("YES")) ? true : false);
+
+        settingsResponse.setMultiuserMode((globalSettingRepository.findAllByCode("MULTIUSER_MODE").getValue().equals(GlobalSettingValue.YES)) ? true : false);
+        settingsResponse.setPostPremoderation((globalSettingRepository.findAllByCode("POST_PREMODERATION").getValue().equals(GlobalSettingValue.YES)) ? true : false);
+        settingsResponse.setStatisticsIsPublic((globalSettingRepository.findAllByCode("STATISTICS_IS_PUBLIC").getValue().equals(GlobalSettingValue.YES)) ? true : false);
         return settingsResponse;
     }
 

@@ -10,12 +10,13 @@ import javax.persistence.*;
 @Table(name="tag2post")
 public class TagToPost {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;//id связи
-    @NonNull
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;//id связи
     @Column(name = "post_id", nullable = false)
-    private int postId;//id поста
-    @NonNull
+    private long postId;//id поста
     @Column(name = "tag_id", nullable = false)
-    private int tagId;// id тега
+    private long tagId;// id тега
+
+    public TagToPost() {
+    }
 }

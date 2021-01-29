@@ -8,11 +8,17 @@ import main.service.AuthService;
 import main.service.CommentService;
 import main.service.PostService;
 import main.service.VoteService;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartResolver;
+import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
@@ -46,9 +52,11 @@ public class ApiPostController {
         }
     }
 
+
     //10
     @PostMapping("/image")
-    public ResponseEntity image(@RequestParam("image") MultipartFile file) {
+    public ResponseEntity image(@RequestParam("image") MultipartFile file)   {
+
         try {
            String path = postService.addImage(file);
             return new ResponseEntity<>(path, HttpStatus.OK);
@@ -63,6 +71,8 @@ public class ApiPostController {
 
 
     }
+
+
 
     //12
     @PostMapping("/comment")

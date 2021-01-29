@@ -14,6 +14,8 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.multipart.MultipartResolver;
+import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 
 @Configuration
 @EnableWebSecurity
@@ -87,4 +89,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
         return super.authenticationManagerBean();
     }
+
+
+//    @Bean
+//    public MultipartResolver multipartResolver() {
+//        CommonsMultipartResolver multipartResolver
+//                = new CommonsMultipartResolver();
+//        multipartResolver.setMaxUploadSize(5242880);
+//        return multipartResolver;
+//    }
 }

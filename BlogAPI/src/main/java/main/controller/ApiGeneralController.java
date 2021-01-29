@@ -182,17 +182,15 @@ public class ApiGeneralController {
     //23
     @GetMapping("/statistics/all")
     public ResponseEntity<StatisticsResponse> statisticsAll(Principal principal) {
-        if (principal == null) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+
+        String email = principal.getName();
+        StatisticsResponse statisticsResponse = postService.getStatisticsAll(email);
+        if (statisticsResponse == null) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         } else {
-            String email = principal.getName();
-            StatisticsResponse statisticsResponse = postService.getStatisticsAll(email);
-            if (statisticsResponse == null) {
-                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-            } else {
-                return new ResponseEntity<>(statisticsResponse, HttpStatus.OK);
-            }
+            return new ResponseEntity<>(statisticsResponse, HttpStatus.OK);
         }
+
 
     }
 

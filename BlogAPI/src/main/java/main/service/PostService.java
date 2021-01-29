@@ -6,14 +6,10 @@ import main.api.response.*;
 import main.api.response.view.CommentForPostId;
 import main.api.response.view.PostForPostResponse;
 import main.api.response.view.UserForResponse;
-import main.model.DateCount;
+import main.model.*;
+import main.model.Enum.GlobalSettingValue;
 import main.model.Enum.ModerationStatus;
-import main.model.Post;
-import main.model.PostComment;
-import main.model.Tag;
-import main.repository.PostRepository;
-import main.repository.PostVoteRepository;
-import main.repository.UserRepository;
+import main.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -39,6 +35,13 @@ public class PostService {
     private UserRepository userRepository;
     @Autowired
     private PostVoteRepository postVoteRepository;
+    @Autowired
+    private TagRepository tagRepository;
+    @Autowired
+    private TagToPostRepository tagToPostRepository;
+    @Autowired
+    private GlobalSettingRepository globalSettingRepository;
+
 
     public PostResponse getPost(int offset, int limit, String mode) {
 
@@ -276,7 +279,7 @@ public class PostService {
         } else {
             ResultResponse resultResponse = getResultResponse(postRequest);
             if (resultResponse.isResult()) {
-                savePost(post, email, postRequest);
+                savePost(post, email, postRequest, false);
             }
             return resultResponse;
         }
@@ -289,7 +292,7 @@ public class PostService {
         if (resultResponse.isResult()) {
             //создаем пост
             Post post = new Post();
-            savePost(post, email, postRequest);
+            savePost(post, email, postRequest, true);
         }
         return resultResponse;
     }
@@ -387,8 +390,8 @@ public class PostService {
             statisticsResponse.setLikesCount(postVoteRepository.countByLikeAll());
             statisticsResponse.setDislikesCount(postVoteRepository.countByDisLikeAll());
 
-            //проверяем настройки блога
-            if (1 == 1) {
+            boolean flagStatisticsIsPublic = (globalSettingRepository.findAllByCode("STATISTICS_IS_PUBLIC").getValue().equals(GlobalSettingValue.YES)) ? true : false;
+            if (flagStatisticsIsPublic) {
                 return statisticsResponse;
             } else {
                 if (userTek.getIsModerator() == 1) {
@@ -479,7 +482,7 @@ public class PostService {
         return textOut;
     }
 
-    private void savePost(Post post, String email, PostRequest postRequest) {
+    private void savePost(Post post, String email, PostRequest postRequest, boolean flagNew) {
 
         Date dateTek = new Date();
         Date datePost = new Date(postRequest.getTimestamp() * 1000);
@@ -493,27 +496,54 @@ public class PostService {
         post.setText(postRequest.getText());
         main.model.User userTek = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("user " + email + " not found"));
         post.setUserAuthor(userTek);
-        if (userTek.getIsModerator() == 0) {
-            post.setModerationStatus(ModerationStatus.NEW);
-        }
-/*
-                //что у меня не нак настроено
-                // можно ли как то без прямого добавления в таблицы таков и их связей с постами
-                //добавить данные по новым тегам и связям?
-                //не пойму как это сделать.
-                //или из-за того что у нас в таблице со связями свой id
-                List<Tag> tagList = new ArrayList();
-                for(String tagName : postRequest.getTags()){
-                    Tag tag =tagRepository.findByName(tagName);
-                    if(tag == null){
-                        Tag newTag = new Tag();
-                        newTag.setName(tagName);
-                    }
-                    tagList.add(tag);
-                }
 
-                post.setTagList(tagList);
-*/
+        boolean postPremoderation = (globalSettingRepository.findAllByCode("POST_PREMODERATION").getValue().equals(GlobalSettingValue.YES)) ? true : false;
+
+        if (!postPremoderation) {
+            post.setModerationStatus(ModerationStatus.ACCEPTED);
+        } else {
+            if (userTek.getIsModerator() == 0 && !flagNew) {
+                post.setModerationStatus(ModerationStatus.NEW);
+            } else {
+                if (flagNew) {
+                    post.setModerationStatus(ModerationStatus.NEW);
+                }
+            }
+        }
+
+        List<Tag> tagPostInList = new ArrayList<>();
+        for (Tag tag : post.getTagList()) {
+            tagPostInList.add(tag);
+        }
+
+        for (String tagName : postRequest.getTags()) {
+
+            Tag tag = tagRepository.findByName(tagName);
+            if (tag == null) {
+                Tag newTag = new Tag();
+                newTag.setName(tagName);
+                tagRepository.save(newTag);
+
+                TagToPost tagToPost = new TagToPost();
+                tagToPost.setPostId(post.getId());
+                tagToPost.setTagId(newTag.getId());
+                tagToPostRepository.save(tagToPost);
+
+            } else {
+                if (!tagPostInList.contains(tag)) {
+                    TagToPost tagToPost = new TagToPost();
+                    tagToPost.setPostId(post.getId());
+                    tagToPost.setTagId(tag.getId());
+                    tagToPostRepository.save(tagToPost);
+
+                } else {
+                    tagPostInList.remove(tag);
+                }
+            }
+        }
+        for (Tag tag : tagPostInList) {
+            tagToPostRepository.deleteTagToPost(post.getId(), tag.getId());
+        }
         postRepository.save(post);
     }
 

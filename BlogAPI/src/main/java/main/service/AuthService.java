@@ -86,11 +86,10 @@ public class AuthService {
                     helper = new MimeMessageHelper(message, multipart, "utf-8");
 
 
-                    String htmlMsg = "<h3>Ссылка на востановление </h3>"
-                            + "<img src='http://localhost:8081/login/change-password/" + code + "'>";
+                    String htmlMsg = "http://localhost:8081/login/change-password/" + code ;
 
                     message.setContent(htmlMsg, "text/html");
-                    helper.setTo(MyConstants.FRIEND_EMAIL);
+                    helper.setTo(email);
                     helper.setSubject("API password change");
                     this.emailSender.send(message);
                     loginResponse.setResult(true);
