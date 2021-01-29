@@ -102,11 +102,16 @@ public class ApiPostController {
     //20
     @PostMapping("/profile/my")
     public ResponseEntity profileMy(Principal principal, @RequestBody MyRequest myRequest) {
-        if (principal == null) {
-            return new ResponseEntity<>(new ResultResponse(), HttpStatus.OK);
-        } else {
-            String email = principal.getName();
-            return new ResponseEntity<>(authService.getMyResponse( myRequest,email), HttpStatus.OK);
+        try {
+            if (principal == null) {
+                return new ResponseEntity<>(new ResultResponse(), HttpStatus.BAD_REQUEST);
+            } else {
+                String email = principal.getName();
+                return new ResponseEntity<>(postService.getMyResponse( myRequest,email), HttpStatus.OK);
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+            return new ResponseEntity<>(new ResultResponse(), HttpStatus.BAD_REQUEST);
         }
     }
 

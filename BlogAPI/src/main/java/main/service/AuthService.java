@@ -86,7 +86,7 @@ public class AuthService {
                     helper = new MimeMessageHelper(message, multipart, "utf-8");
 
 
-                    String htmlMsg = "http://localhost:8081/login/change-password/" + code ;
+                    String htmlMsg = "http://localhost:8081/login/change-password/" + code;
 
                     message.setContent(htmlMsg, "text/html");
                     helper.setTo(email);
@@ -185,40 +185,6 @@ public class AuthService {
         }
     }
 
-    public ResultResponse getMyResponse(MyRequest myRequest, String email) {
-
-        ResultResponse loginResponse = new ResultResponse();
-        try {
-            main.model.User userTek = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("code not found"));
-            if (userTek != null) {
-                main.model.User userEmail = userRepository.findByEmail(myRequest.getEmail()).orElseThrow(() -> new UsernameNotFoundException("code not found"));
-                if (userEmail == null) {
-                    //добавить проверку запроса
-                    String password = myRequest.getPassword();
-                    if (password.length() < 6) {
-                        Map<String, Object> errors = new HashMap<>();
-                        errors.put("password", "Пароль короче 6-ти символов");
-                        loginResponse.setErrors(errors);
-                    } else {
-                        userTek.setPassword(new BCryptPasswordEncoder().encode(password));
-                        userTek.setEmail(myRequest.getEmail());
-                        userTek.setName(myRequest.getName());
-                        userRepository.save(userTek);
-                        loginResponse.setResult(true);
-                    }
-                } else {
-                    Map<String, Object> errors = new HashMap<>();
-                    errors.put("email", "Такой email уже зарегестрирован");
-                    loginResponse.setErrors(errors);
-                }
-
-                return loginResponse;
-            }
-            return loginResponse;
-        } catch (UsernameNotFoundException e) {
-            return loginResponse;
-        }
-    }
 
 
     public CaptchaResponse captcha() {

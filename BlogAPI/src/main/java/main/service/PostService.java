@@ -1,6 +1,7 @@
 package main.service;
 
 import main.api.request.ModerationRequest;
+import main.api.request.MyRequest;
 import main.api.request.PostRequest;
 import main.api.response.*;
 import main.api.response.view.CommentForPostId;
@@ -15,9 +16,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -25,6 +30,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.imgscalr.Scalr.resize;
 
 
 @Service
@@ -374,10 +381,95 @@ public class PostService {
         }
         f.flush();
         f.close();
-        System.out.println(path);
-        return path;
+        String pathName = path + "/" + file.getOriginalFilename();
+        return pathName;
 
     }
+
+    public ResultResponse getMyResponse(MyRequest myRequest, String email) throws Exception {
+
+        ResultResponse loginResponse = new ResultResponse();
+        try {
+            main.model.User userTek = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("code not found"));
+            if (userTek != null) {
+                //изменяем почту
+                if (userTek.getEmail() != myRequest.getEmail()) {
+                    main.model.User userEmail = userRepository.findByEmail(myRequest.getEmail()).orElseThrow(() -> new UsernameNotFoundException("code not found"));
+                    if (userEmail == null) {
+                        userTek.setEmail(myRequest.getEmail());
+                    } else {
+                        Map<String, Object> errors = new HashMap<>();
+                        errors.put("email", "Такой email уже зарегестрирован");
+                        loginResponse.setErrors(errors);
+                        return loginResponse;
+                    }
+                }
+                //изменяем имя
+                if (myRequest.getName().length() < 3) {
+                    Map<String, Object> errors = new HashMap<>();
+                    errors.put("name", "Короткое имя");
+                    loginResponse.setErrors(errors);
+                    return loginResponse;
+                } else {
+                    userTek.setName(myRequest.getName());
+                }
+                //изменяем пароль
+                if (myRequest.getPassword() != null) {
+                    String password = myRequest.getPassword();
+                    if (password.length() < 6) {
+                        Map<String, Object> errors = new HashMap<>();
+                        errors.put("password", "Пароль короче 6-ти символов");
+                        loginResponse.setErrors(errors);
+                        return loginResponse;
+                    } else {
+                        userTek.setPassword(new BCryptPasswordEncoder().encode(password));
+                    }
+                }
+                //изменяем фото
+                if (myRequest.getPhoto() != null) {
+                    MultipartFile photo = myRequest.getPhoto();
+                    InputStream in = photo.getInputStream();
+                    String path1 = getHash(2);
+                    String path2 = getHash(2);
+                    String path3 = getHash(2);
+                    String path = "avatars/" + path1 + "/" + path2 + "/" + path3;
+                    Path dir = Files.createDirectories(Paths.get(path));
+                    FileOutputStream f = new FileOutputStream(String.valueOf(dir.resolve(photo.getOriginalFilename())));
+                    int ch = 0;
+                    while ((ch = in.read()) != -1) {
+                        f.write(ch);
+                    }
+                    f.flush();
+                    f.close();
+                    String pathName = path + "/" + photo.getOriginalFilename();
+                    File file = new File(pathName);
+
+                    BufferedImage image = ImageIO.read(file);
+                    BufferedImage newImage = resize(image, 35, 35);
+                    ImageIO.write(newImage, "jpg", file);
+
+                    userTek.setPhoto(pathName);
+
+                }
+                //удаляем фото
+                if (myRequest.getRemovePhoto() == 1) {
+                    String pathName = userTek.getPhoto();
+                    File file = new File(pathName);
+                    file.delete();
+                    userTek.setPhoto(null);
+                }
+
+                userRepository.save(userTek);
+                loginResponse.setResult(true);
+                return loginResponse;
+            }
+            return loginResponse;
+        } catch (
+                UsernameNotFoundException e) {
+            return loginResponse;
+        }
+    }
+
 
     public StatisticsResponse getStatisticsAll(String email) {
 
